@@ -4,17 +4,30 @@
     <vendor>handy</vendor>
 
     <description><![CDATA[
-    <p>让 IntelliJ IDEA 的 Markdown 预览正确渲染 VitePress Theme Teek 的自定义语法。</p>
+    <p>Renders <a href="https://github.com/Kele-Bingtang/vitepress-theme-teek">VitePress Theme Teek</a>
+    custom markdown containers in the Markdown preview.</p>
     <ul>
-        <li><code>::: video bilibili|tencent|youku|youtube|vimeo|xigua</code> 视频容器</li>
-        <li><code>::: note / center / right</code> 简单容器</li>
-        <li><code>::: shareCard / imgCard / navCard</code> 卡片容器（解析内部 YAML）</li>
-        <li><code>::: demo</code> 组件演示占位</li>
-        <li>以 <code>/</code> 开头的图片路径自动映射到 VitePress 的 public 目录</li>
+        <li><code>::: video bilibili|tencent|youku|youtube|vimeo|xigua</code> &mdash; video container, rendered as a card that opens in the browser</li>
+        <li><code>::: note|tip|warning|danger|info|details</code> &mdash; callout containers</li>
+        <li><code>::: center</code> and <code>::: right</code> &mdash; alignment containers</li>
+        <li><code>::: shareCard|imgCard|navCard</code> &mdash; card containers, the YAML inside is parsed</li>
+        <li><code>::: demo</code> &mdash; component demo placeholder</li>
+        <li>TODO lists (<code>- [ ]</code> / <code>- [x]</code>)</li>
+        <li>Image paths starting with <code>/</code> are resolved against the VitePress <code>public</code> directory</li>
     </ul>
-    <p>视频容器受 IDE 预览页 CSP 限制无法内嵌播放，卡片点击后在浏览器中打开。</p>
-    <p>基于 MIT 协议开源，作者 handy。</p>
+    <p>Videos cannot be embedded in the preview because of the editor's content security policy;
+    they are shown as cards and open in the browser instead.</p>
+    <p>Open source under the MIT license. Author: handy.</p>
     ]]></description>
+
+    <change-notes><![CDATA[
+    <p>0.1.0</p>
+    <ul>
+        <li>Support Teek containers: video, note, center, right, shareCard, imgCard, navCard, demo</li>
+        <li>Resolve public directory image paths in the preview</li>
+        <li>Switch the Markdown preview renderer to JCEF automatically</li>
+    </ul>
+    ]]></change-notes>
 
     <depends>com.intellij.modules.platform</depends>
     <depends>org.intellij.plugins.markdown</depends>

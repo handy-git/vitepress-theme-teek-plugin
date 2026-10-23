@@ -1,9 +1,16 @@
 /*
  * Teek Markdown Preview —— 预览页脚本
  *
- * 预览内容由 IDE 通过 IncrementalDOM 反复 patch 到 body，因此转换逻辑挂在
- * afterPatchListeners 上，每次都重新扫一遍顶层块。整块处理完打 data-teek 标记，
- * 保证幂等，避免与 patch 互相踩。
+ * 职责：
+ * 1. 把 ::: type 容器改写成真实 DOM（视频卡片、提示框、卡片网格、组件占位）
+ * 2. 解析卡片容器内的 YAML（预览页 CSP 禁止 fetch，YAML 解析只能本地实现）
+ * 3. 归一化图片地址：本地图片走 Java 侧下发的映射表，远程图片保持原样
+ *
+ * 关键约束：
+ * - 预览内容由 IDE 通过 IncrementalDOM 反复 patch 到 body，转换逻辑必须挂在
+ *   afterPatchListeners 上，每次 patch 后重跑；处理完打 data-teek 标记保证幂等。
+ * - 预览页 CSP 为 default-src 'none'，脚本只能用插件自带资源，不能 fetch/XHR。
+ * - 图片地址不在这里拼路径，一律查 window.__TEEK_PATHS__.resources（由 Java 侧解析生成）。
  */
 (function () {
   'use strict';

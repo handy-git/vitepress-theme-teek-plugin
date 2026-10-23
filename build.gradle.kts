@@ -8,7 +8,7 @@ version = "0.1.0"
 
 java {
     toolchain {
-        // 2026.2 平台类文件版本 69，必须用 JDK 25 编译
+        // 2026.2 平台类文件版本为 69，必须使用 JDK 25 编译
         languageVersion = JavaLanguageVersion.of(25)
     }
 }
@@ -22,9 +22,15 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        // 本机已装 IDEA 2026.2.3（build 262），直接复用安装目录，免下载
-        local("/Applications/IntelliJ IDEA.app")
-        // 若想按版本自动下载，可改用：intellijIdeaUltimate("2026.2.3")
+        // 离线构建：把 LOCAL_IDE_PATH 指向本机已安装的 IDE，例如
+        // LOCAL_IDE_PATH="/Applications/IntelliJ IDEA.app" ./gradlew buildPlugin
+        // 未设置该变量时按版本号下载对应 IDE
+        val localIde = providers.environmentVariable("LOCAL_IDE_PATH").orNull
+        if (localIde != null) {
+            local(localIde)
+        } else {
+            intellijIdeaUltimate("2026.2.3")
+        }
         bundledPlugin("org.intellij.plugins.markdown")
     }
 }
@@ -38,6 +44,13 @@ intellijPlatform {
         ideaVersion {
             sinceBuild = "262"
         }
+    }
+
+    // Marketplace 签名：设置下列三个环境变量后执行 ./gradlew signPlugin
+    signing {
+        certificateChain = providers.environmentVariable("CERTIFICATE_CHAIN")
+        privateKey = providers.environmentVariable("PRIVATE_KEY")
+        password = providers.environmentVariable("PRIVATE_KEY_PASSWORD")
     }
 }
 

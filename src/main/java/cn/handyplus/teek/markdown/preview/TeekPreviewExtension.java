@@ -21,8 +21,14 @@ import java.util.regex.Pattern;
 /**
  * Teek 预览扩展：向预览页注入脚本与样式，并接管图片资源加载。
  * <p>
- * 脚本负责把 {@code ::: type} 容器改写成真实的 DOM；资源加载负责把以 {@code /} 开头的
- * 路径映射到 VitePress 的 public 目录，以及提供插件自带的 js/css。
+ * 整体分工：
+ * <ul>
+ *     <li>脚本 {@code teek/teek.js} 负责把 {@code ::: type} 容器改写成真实 DOM，并解析容器内的 YAML</li>
+ *     <li>脚本 {@code teek/data.js} 由本类动态生成，下发 public 目录、md 目录以及「图片引用 → 真实文件路径」映射，
+ *     脚本只查表、不再自己拼路径</li>
+ *     <li>本类同时实现 {@link ResourceProvider}，负责把图片请求读成字节返回</li>
+ * </ul>
+ * 资源接管顺序很关键，详见 {@link #getPriority()}。
  *
  * @author handy
  */
@@ -52,8 +58,14 @@ public final class TeekPreviewExtension implements MarkdownBrowserPreviewExtensi
         "!\\[[^\\]]*\\]\\(([^)\\s]+)[^)]*\\)|<img[^>]+src=[\"']([^\"']+)[\"']|(?:img|avatar)\\s*:\\s*([^\\s#\"']+)",
         Pattern.CASE_INSENSITIVE);
 
+    /**
+     * 注入预览页的脚本，顺序有依赖：路径映射脚本必须先于主脚本执行
+     */
     private static final List<String> SCRIPTS = List.of("teek/data.js", "teek/teek.js");
 
+    /**
+     * 注入预览页的样式
+     */
     private static final List<String> STYLES = List.of("teek/teek.css");
 
     /**
@@ -61,10 +73,19 @@ public final class TeekPreviewExtension implements MarkdownBrowserPreviewExtensi
      */
     private static final int MAX_UP_LEVELS = 8;
 
+    /**
+     * 当前预览面板，用于取得正在预览的 markdown 文件
+     */
     private final MarkdownHtmlPanel panel;
 
+    /**
+     * 解析出的 public 目录，懒加载并缓存
+     */
     private VirtualFile publicDir;
 
+    /**
+     * public 目录是否已解析，避免每次资源请求都重复查找
+     */
     private boolean publicDirResolved;
 
     /**
