@@ -1,0 +1,285 @@
+/*
+ * Teek Markdown Preview —— 预览页样式
+ * 只用 currentColor 与半透明灰，自动适配 IDE 明暗主题。
+ */
+
+.tk-video,
+.tk-note,
+.tk-container,
+.tk-demo,
+.tk-cards {
+    margin: 16px 0;
+}
+
+/* ---------------------------------------------------------------- video */
+
+.tk-video__link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s ease;
+}
+
+.tk-video__link:hover {
+    background: rgba(128, 128, 128, 0.1);
+}
+
+.tk-video__play {
+    flex: 0 0 auto;
+    width: 0;
+    height: 0;
+    border-left: 14px solid currentColor;
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+    opacity: 0.7;
+}
+
+.tk-video__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.tk-video__platform {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.6;
+}
+
+.tk-video__id {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+    word-break: break-all;
+}
+
+.tk-video__hint {
+    margin: 6px 0 0;
+    font-size: 12px;
+    opacity: 0.55;
+}
+
+/* ---------------------------------------------------------------- note */
+
+.tk-note {
+    padding: 12px 16px;
+    border-left: 3px solid var(--tk-note-accent, #4a9eff);
+    border-radius: 6px;
+    background: var(--tk-note-bg, rgba(74, 158, 255, 0.08));
+}
+
+.tk-note--tip {
+    --tk-note-accent: #2ea043;
+    --tk-note-bg: rgba(46, 160, 67, 0.08);
+}
+
+.tk-note--warning {
+    --tk-note-accent: #d29922;
+    --tk-note-bg: rgba(210, 153, 34, 0.08);
+}
+
+.tk-note--danger {
+    --tk-note-accent: #f85149;
+    --tk-note-bg: rgba(248, 81, 73, 0.08);
+}
+
+.tk-note--info,
+.tk-note--note {
+    --tk-note-accent: #4a9eff;
+    --tk-note-bg: rgba(74, 158, 255, 0.08);
+}
+
+.tk-note--details {
+    --tk-note-accent: #888780;
+    --tk-note-bg: rgba(136, 135, 128, 0.1);
+}
+
+.tk-note__title {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--tk-note-accent, #4a9eff);
+}
+
+/* ---------------------------------------------------------------- 对齐容器 */
+
+.tk-center {
+    text-align: center;
+}
+
+.tk-right {
+    text-align: right;
+}
+
+/* ---------------------------------------------------------------- 卡片容器 */
+
+.tk-cards {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.tk-cards[style*="--tk-cols"] {
+    grid-template-columns: repeat(var(--tk-cols), minmax(0, 1fr));
+}
+
+.tk-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 10px;
+    background: rgba(128, 128, 128, 0.05);
+    color: inherit;
+    text-decoration: none;
+}
+
+.tk-card:hover {
+    border-color: rgba(128, 128, 128, 0.55);
+}
+
+.tk-card__cover-wrap {
+    overflow: hidden;
+}
+
+.tk-card__cover {
+    display: block;
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.tk-card--share .tk-card__cover {
+    width: 56px;
+    height: 56px;
+    margin: 14px 14px 0;
+    border-radius: 50%;
+}
+
+.tk-card__body {
+    padding: 10px 14px 14px;
+}
+
+.tk-card__name {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.tk-card__desc {
+    display: -webkit-box;
+    margin: 0;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1.5;
+    opacity: 0.7;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.tk-card__author {
+    margin: 6px 0 0;
+    font-size: 12px;
+    opacity: 0.55;
+}
+
+.tk-card__badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(74, 158, 255, 0.18);
+    color: #4a9eff;
+    font-size: 11px;
+}
+
+.tk-card__badge--tip {
+    background: rgba(46, 160, 67, 0.18);
+    color: #2ea043;
+}
+
+.tk-card__badge--warning {
+    background: rgba(210, 153, 34, 0.18);
+    color: #d29922;
+}
+
+.tk-card__badge--danger {
+    background: rgba(248, 81, 73, 0.18);
+    color: #f85149;
+}
+
+.tk-cards__empty {
+    margin: 0;
+    font-size: 12px;
+    opacity: 0.6;
+}
+
+/* ---------------------------------------------------------------- demo / 未知容器 */
+
+.tk-demo {
+    padding: 12px 16px;
+    border: 1px dashed rgba(128, 128, 128, 0.45);
+    border-radius: 10px;
+}
+
+.tk-demo__title {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.tk-demo__path {
+    margin: 0 0 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    opacity: 0.85;
+}
+
+.tk-demo__hint {
+    margin: 0;
+    font-size: 12px;
+    opacity: 0.55;
+}
+
+.tk-container {
+    padding: 12px 16px;
+    border: 1px solid rgba(128, 128, 128, 0.35);
+    border-radius: 8px;
+}
+
+.tk-container__title {
+    margin: 0 0 6px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.6;
+}
+
+/* ---------------------------------------------------------------- 自检提示 */
+
+.tk-diag {
+    margin: 0 0 12px;
+    padding: 8px 12px;
+    border: 1px solid rgba(210, 153, 34, 0.5);
+    border-radius: 6px;
+    background: rgba(210, 153, 34, 0.12);
+    color: #d29922;
+    font-size: 12px;
+}
+
+/* ---------------------------------------------------------------- 收尾 */
+
+.tk-note > p:last-child,
+.tk-container > p:last-child,
+.tk-center > p:last-child,
+.tk-right > p:last-child {
+    margin-bottom: 0;
+}

@@ -1,0 +1,12 @@
+.gradle/
+build/
+out/
+.idea/
+*.iml
+.DS_Store
+
+# IntelliJ Platform Gradle Plugin 本地状态
+.intellijPlatform/
+
+# WorkBuddy 项目数据
+.workbuddy/

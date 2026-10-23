@@ -1,0 +1,34 @@
+<idea-plugin>
+    <id>cn.handyplus.teek.markdown</id>
+    <name>Teek Markdown Preview</name>
+    <vendor>handy</vendor>
+
+    <description><![CDATA[
+    <p>让 IntelliJ IDEA 的 Markdown 预览正确渲染 VitePress Theme Teek 的自定义语法。</p>
+    <ul>
+        <li><code>::: video bilibili|tencent|youku|youtube|vimeo|xigua</code> 视频容器</li>
+        <li><code>::: note / center / right</code> 简单容器</li>
+        <li><code>::: shareCard / imgCard / navCard</code> 卡片容器（解析内部 YAML）</li>
+        <li><code>::: demo</code> 组件演示占位</li>
+        <li>以 <code>/</code> 开头的图片路径自动映射到 VitePress 的 public 目录</li>
+    </ul>
+    <p>视频容器受 IDE 预览页 CSP 限制无法内嵌播放，卡片点击后在浏览器中打开。</p>
+    <p>基于 MIT 协议开源，作者 handy。</p>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>org.intellij.plugins.markdown</depends>
+
+    <extensions defaultExtensionNs="org.intellij.markdown">
+        <browserPreviewExtensionProvider
+                implementation="cn.handyplus.teek.markdown.preview.TeekPreviewExtensionProvider"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity implementation="cn.handyplus.teek.markdown.TeekStartupActivity"/>
+        <applicationService serviceImplementation="cn.handyplus.teek.markdown.settings.TeekSettings"/>
+        <applicationConfigurable parentId="language" id="cn.handyplus.teek.markdown.settings"
+                                 displayName="Teek Markdown"
+                                 instance="cn.handyplus.teek.markdown.settings.TeekConfigurable"/>
+    </extensions>
+</idea-plugin>
