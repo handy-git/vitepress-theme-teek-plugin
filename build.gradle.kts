@@ -4,7 +4,9 @@ plugins {
 }
 
 group = "cn.handyplus"
-version = "0.1.0"
+
+// 版本号默认取 gradle.properties 的 pluginVersion，发布时由 CI 用 tag 覆盖
+version = providers.gradleProperty("pluginVersion").get()
 
 java {
     toolchain {

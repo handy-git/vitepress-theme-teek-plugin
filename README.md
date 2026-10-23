@@ -32,8 +32,8 @@ Renders [VitePress Theme Teek](https://github.com/Kele-Bingtang/vitepress-theme-
 
 ## 安装
 
-下载 `vitepress-theme-teek-plugin-0.1.0.zip`，在 IDE 中执行
-`Settings → Plugins → 齿轮 → Install Plugin from Disk...`，重启 IDE。
+从仓库的 Releases 页面下载最新的 `vitepress-theme-teek-plugin-<版本号>.zip`，
+在 IDE 中执行 `Settings → Plugins → 齿轮 → Install Plugin from Disk...`，重启 IDE。
 
 设置项位于 `Settings → Languages & Frameworks → Teek Markdown`：
 
@@ -52,6 +52,24 @@ Renders [VitePress Theme Teek](https://github.com/Kele-Bingtang/vitepress-theme-
 
 ```sh
 LOCAL_IDE_PATH="/Applications/IntelliJ IDEA.app" ./gradlew buildPlugin
+```
+
+## 版本与发布
+
+版本号统一由 Git tag 决定，推送 tag 即自动构建并发布到 Releases：
+
+```sh
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+工作流（`.github/workflows/release.yml`）会用该 tag 作为插件版本号构建，
+产物 `vitepress-theme-teek-plugin-<版本号>.zip` 上传到 Releases 页面。
+
+本地构建时版本号取 `gradle.properties` 的 `pluginVersion`，需要临时改版本可覆盖：
+
+```sh
+./gradlew buildPlugin -PpluginVersion=0.2.0
 ```
 
 ## 发布到 Marketplace
