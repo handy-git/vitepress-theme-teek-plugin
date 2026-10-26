@@ -101,6 +101,10 @@ demo/button-primary
 
 ![remote](https://vp.teek.top/blog/bg3.webp)
 
-public 目录图片（需要文档项目里存在 docs/public/blog/bg1.webp）：
+public 目录图片（插件从 md 所在目录向上查找 public，本文件对应 `samples/public/blog/bg1.png`）：
 
-![public](/blog/bg1.webp)
+![public](/blog/bg1.png)
+
+相对路径图片（相对本 md 所在目录）：
+
+![relative](./public/blog/bg1.png)

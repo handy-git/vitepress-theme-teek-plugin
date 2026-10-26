@@ -366,7 +366,8 @@ public final class TeekPreviewExtension implements MarkdownBrowserPreviewExtensi
         VirtualFile markdownFile = panel.getVirtualFile();
         VirtualFile mdDir = markdownFile == null ? null : markdownFile.getParent();
         if (mdDir != null) {
-            VirtualFile file = asFile(mdDir, path);
+            // VirtualFile 不识别 ./ 前缀，先归一化
+            VirtualFile file = asFile(mdDir, path.replaceAll("^(\\./)+", ""));
             if (file != null) {
                 return file;
             }
