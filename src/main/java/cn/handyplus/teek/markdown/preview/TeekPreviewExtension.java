@@ -24,7 +24,8 @@ import java.util.regex.Pattern;
  * 整体分工：
  * <ul>
  *     <li>脚本 {@code teek/teek.js} 负责把 {@code ::: type} 容器改写成真实 DOM，并解析容器内的 YAML</li>
- *     <li>脚本 {@code teek/data.js} 由本类动态生成，下发 public 目录、md 目录以及「图片引用 → 真实文件路径」映射，
+ *     <li>脚本 {@code teek/data.js} 由本类动态生成，下发 public 目录、md 目录、
+ *     「图片引用 → 真实文件路径」映射，以及小体积图片的 data URI 兜底，
  *     脚本只查表、不再自己拼路径</li>
  *     <li>本类同时实现 {@link ResourceProvider}，负责把图片请求读成字节返回</li>
  * </ul>
@@ -72,6 +73,16 @@ public final class TeekPreviewExtension implements MarkdownBrowserPreviewExtensi
      * 向上查找 public 目录的最大层级
      */
     private static final int MAX_UP_LEVELS = 8;
+
+    /**
+     * 单张图片可内联的最大字节数，超过则只走资源通道
+     */
+    private static final long MAX_INLINE_BYTES = 512L * 1024;
+
+    /**
+     * 单个文档内联图片的总字节上限，避免 data.js 过大
+     */
+    private static final long MAX_TOTAL_INLINE_BYTES = 8L * 1024 * 1024;
 
     /**
      * 当前预览面板，用于取得正在预览的 markdown 文件
@@ -222,55 +233,102 @@ public final class TeekPreviewExtension implements MarkdownBrowserPreviewExtensi
         VirtualFile markdownFile = panel.getVirtualFile();
         VirtualFile mdDir = markdownFile == null ? null : markdownFile.getParent();
         VirtualFile publicDir = getPublicDir();
-        String resources = markdownFile == null ? "{}" : buildResourceMap(markdownFile);
+        String resources = "{}";
+        String images = "{}";
+        if (markdownFile != null) {
+            StringBuilder resourceJson = new StringBuilder();
+            StringBuilder imageJson = new StringBuilder();
+            collectResources(markdownFile, resourceJson, imageJson);
+            resources = resourceJson.append("}").toString();
+            images = imageJson.append("}").toString();
+        }
         String script = "window.__TEEK_PATHS__={"
             + "\"publicDir\":" + jsonString(publicDir == null ? "" : publicDir.getPath())
             + ",\"mdDir\":" + jsonString(mdDir == null ? "" : mdDir.getPath())
             + ",\"resources\":" + resources
+            + ",\"images\":" + images
             + "};";
+        LOG.info("Teek: data.js 生成完成，资源 " + resources.length() + " 字符，内联图 " + images.length() + " 字符");
         return new Resource(script.getBytes(StandardCharsets.UTF_8), "text/javascript; charset=UTF-8");
     }
 
     /**
-     * 扫描文档里的图片引用，把「引用名 → 真实绝对路径」解析成映射表下发给预览页。
+     * 扫描文档里的图片引用，收集「引用名 → 真实路径」与「引用名 → data URI」两张表。
      * <p>
-     * 只放真实存在的文件，JS 侧命中才改写地址，避免拼错路径造成破图。
+     * 只收录真实存在的文件；体积小的图片额外生成 data URI，供预览页在资源通道失败时兜底，
+     * 该兜底不依赖任何网络或文件协议，因此一定能显示。
      *
-     * @param markdownFile 当前 markdown 文件
-     * @return JSON 对象字符串
+     * @param markdownFile markdown 文件
+     * @param resourceJson 输出：引用名 → 绝对路径
+     * @param imageJson    输出：引用名 → data URI
      */
-    @NotNull
-    private String buildResourceMap(@NotNull VirtualFile markdownFile) {
+    private void collectResources(@NotNull VirtualFile markdownFile,
+                                  @NotNull StringBuilder resourceJson,
+                                  @NotNull StringBuilder imageJson) {
         String text;
         try {
             text = new String(markdownFile.contentsToByteArray(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             LOG.warn("读取 markdown 失败：" + markdownFile.getPath(), e);
-            return "{}";
+            return;
         }
+        resourceJson.append("{");
+        imageJson.append("{");
+        boolean firstResource = true;
+        boolean firstImage = true;
+        long inlinedBytes = 0;
+
         Matcher matcher = IMAGE_REF.matcher(text);
-        StringBuilder json = new StringBuilder("{");
-        boolean first = true;
         while (matcher.find()) {
             String raw = firstNonNull(matcher.group(1), matcher.group(2), matcher.group(3));
             if (raw == null || raw.isEmpty() || raw.matches("^(?i)(https?:|data:|file:|//).*")) {
                 continue;
             }
             String key = normalizeKey(raw);
-            if (json.indexOf(jsonString(key)) >= 0) {
+            if (resourceJson.indexOf(jsonString(key)) >= 0) {
                 continue;
             }
             VirtualFile file = resolveImage(raw);
             if (file == null) {
                 continue;
             }
-            if (!first) {
-                json.append(",");
+            if (!firstResource) {
+                resourceJson.append(",");
             }
-            json.append(jsonString(key)).append(":").append(jsonString(file.getPath()));
-            first = false;
+            resourceJson.append(jsonString(key)).append(":").append(jsonString(file.getPath()));
+            firstResource = false;
+
+            long size = file.getLength();
+            if (size <= MAX_INLINE_BYTES && inlinedBytes + size <= MAX_TOTAL_INLINE_BYTES) {
+                String dataUri = toDataUri(file);
+                if (dataUri != null) {
+                    if (!firstImage) {
+                        imageJson.append(",");
+                    }
+                    imageJson.append(jsonString(key)).append(":").append(jsonString(dataUri));
+                    firstImage = false;
+                    inlinedBytes += size;
+                }
+            }
         }
-        return json.append("}").toString();
+    }
+
+    /**
+     * 把图片文件转成 data URI。
+     *
+     * @param file 图片文件
+     * @return data URI，读取失败返回 {@code null}
+     */
+    @Nullable
+    private String toDataUri(@NotNull VirtualFile file) {
+        try {
+            byte[] content = file.contentsToByteArray();
+            return "data:" + contentType(file.getName()) + ";base64,"
+                + java.util.Base64.getEncoder().encodeToString(content);
+        } catch (IOException | OutOfMemoryError e) {
+            LOG.warn("内联图片失败：" + file.getPath(), e);
+            return null;
+        }
     }
 
     /**

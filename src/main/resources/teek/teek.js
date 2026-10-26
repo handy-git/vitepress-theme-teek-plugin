@@ -293,6 +293,13 @@
       img.setAttribute('src', imageUrl(cover) || assetUrl(cover));
       img.setAttribute('alt', item.name || '');
       img.onerror = function () {
+        var inline = (window.__TEEK_PATHS__ || {}).images || {};
+        var data = inline[normalizeKey(cover)];
+        if (data) {
+          img.onerror = null;
+          img.setAttribute('src', data);
+          return;
+        }
         wrap.style.display = 'none';
       };
       wrap.appendChild(img);
@@ -420,17 +427,8 @@
     return (window.__TEEK_PATHS__ || {}).resources || {};
   }
 
-  function fileUrl(absPath) {
-    if (!absPath) {
-      return '';
-    }
-    return 'file://' + absPath.split('/').map(function (part) {
-      return part ? encodeURIComponent(part) : '';
-    }).join('/');
-  }
-
   /**
-   * 把图片引用解析成可加载地址：远程原样，本地按映射表直读文件。
+   * 把图片引用解析成可加载地址：远程原样，本地走插件资源通道（Java 侧已确认文件存在）。
    *
    * @param path 引用路径
    * @returns {String} 地址，无法解析时返回空串
@@ -443,32 +441,74 @@
     if (/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(value)) {
       return value;
     }
-    var abs = resourceMap()[normalizeKey(value)];
-    return abs ? fileUrl(abs) : '';
+    var key = normalizeKey(value);
+    if (!resourceMap()[key]) {
+      return '';
+    }
+    return assetUrlOf(key);
   }
 
   /**
-   * 按候选地址依次尝试，全部失败后不再重试。
+   * 生成插件资源通道地址。
    *
-   * @param img        图片元素
-   * @param candidates 候选地址
-   * @param guard      幂等标记值
+   * @param key 归一化后的资源名
+   * @returns {String} 地址
    */
-  function applyChain(img, candidates, guard) {
-    var index = 0;
-    var attempt = function () {
-      if (index >= candidates.length) {
+  function assetUrlOf(key) {
+    return RES_BASE ? RES_BASE + 'teek/asset/' + encodeURI(key) : '';
+  }
+
+  /**
+   * 从 file:// 地址反推资源名，用于纠正历史上已经写入的本地路径。
+   *
+   * @param src   file:// 地址
+   * @param paths 路径映射
+   * @returns {String} 资源名，无法推断时返回空串
+   */
+  function nameFromFileUrl(src, paths) {
+    var abs = decodeURIComponent(src.replace(/^file:\/\//i, ''));
+    var map = resourceMap();
+    for (var key in map) {
+      if (Object.prototype.hasOwnProperty.call(map, key) && map[key] === abs) {
+        return key;
+      }
+    }
+    if (paths.publicDir && abs.indexOf(paths.publicDir + '/') === 0) {
+      return abs.slice(paths.publicDir.length + 1);
+    }
+    if (paths.mdDir && abs.indexOf(paths.mdDir + '/') === 0) {
+      return abs.slice(paths.mdDir.length + 1);
+    }
+    return '';
+  }
+
+  /**
+   * 加载图片：失败重试两次（预览页首次批量加载偶发失败），仍失败则切内联 data URI。
+   * data URI 由 Java 侧下发，不依赖网络与文件协议，必定能显示。
+   *
+   * @param img 图片元素
+   * @param url 资源地址
+   * @param key 资源名
+   */
+  function applyImage(img, url, key) {
+    var attempt = 0;
+    var inline = (window.__TEEK_PATHS__ || {}).images || {};
+    img.onload = function () {
+      img.setAttribute('data-teek-applied', url);
+    };
+    img.onerror = function () {
+      attempt += 1;
+      if (attempt > 2) {
         img.onerror = null;
+        if (inline[key]) {
+          img.src = inline[key];
+          img.setAttribute('data-teek-applied', url);
+        }
         return;
       }
-      img.onerror = function () {
-        index += 1;
-        attempt();
-      };
-      img.src = candidates[index];
+      img.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_teek=' + attempt;
     };
-    img.setAttribute('data-teek-applied', guard);
-    attempt();
+    img.src = url;
   }
 
   /**
@@ -476,20 +516,23 @@
    */
   function fixImages(root) {
     var map = resourceMap();
+    var paths = window.__TEEK_PATHS__ || {};
     var images = root.querySelectorAll('img');
     for (var i = 0; i < images.length; i++) {
       var img = images[i];
       var src = img.getAttribute('src') || '';
       var name = assetName(src);
-      var abs = name ? map[normalizeKey(name)] : '';
-      if (!abs) {
+      if (!name && /^file:/i.test(src)) {
+        name = nameFromFileUrl(src, paths);
+      }
+      if (!name || !map[normalizeKey(name)]) {
         continue;
       }
-      var primary = RES_BASE ? RES_BASE + 'teek/asset/' + encodeURI(normalizeKey(name)) : fileUrl(abs);
-      if (img.getAttribute('data-teek-applied') === primary) {
+      var url = assetUrlOf(normalizeKey(name));
+      if (!url || img.getAttribute('data-teek-applied') === url) {
         continue;
       }
-      applyChain(img, [primary, fileUrl(abs)], primary);
+      applyImage(img, url, normalizeKey(name));
     }
   }
 
@@ -536,6 +579,12 @@
     }
     if (broken > 0) {
       problems.push('图片失败 ' + broken + ' 张（首个：' + sampleSrc + '）');
+    }
+    if (problems.length) {
+      var inlineMap = (window.__TEEK_PATHS__ || {}).images || {};
+      problems.push('映射 ' + Object.keys(resourceMap()).length
+        + ' 项 / 内联 ' + Object.keys(inlineMap).length
+        + ' 项 / 通道 ' + (RES_BASE ? 'ok' : '缺失'));
     }
 
     var existing = document.querySelector('.tk-diag');
