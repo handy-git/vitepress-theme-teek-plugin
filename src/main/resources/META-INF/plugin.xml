@@ -21,7 +21,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-    <p>0.1.0</p>
+    <p>0.0.1</p>
     <ul>
         <li>Support Teek containers: video, note, center, right, shareCard, imgCard, navCard, demo</li>
         <li>Resolve public directory image paths in the preview</li>
