@@ -560,7 +560,8 @@
       problems.push('未识别容器（候选 ' + blocks.length + ' 块；' + (sample || '找不到含 ::: 的块') + '）');
     }
 
-    var broken = 0;
+    var brokenLocal = 0;
+    var brokenRemote = 0;
     var sampleSrc = '';
     var pending = false;
     var images = document.querySelectorAll('img');
@@ -570,21 +571,31 @@
         pending = true;
         continue;
       }
-      if (img.naturalWidth === 0) {
-        broken++;
+      if (img.naturalWidth !== 0) {
+        continue;
+      }
+      var src = img.getAttribute('src') || '';
+      if (/^https?:\/\//i.test(src) && !/^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\//i.test(src)) {
+        // 外链图片失败属于网络问题，不计入插件诊断
+        brokenRemote++;
+      } else {
+        brokenLocal++;
         if (!sampleSrc) {
-          sampleSrc = img.getAttribute('src') || '';
+          sampleSrc = src;
         }
       }
     }
-    if (broken > 0) {
-      problems.push('图片失败 ' + broken + ' 张（首个：' + sampleSrc + '）');
+    if (brokenLocal > 0) {
+      problems.push('图片失败 ' + brokenLocal + ' 张（首个：' + sampleSrc + '）');
     }
     if (problems.length) {
       var inlineMap = (window.__TEEK_PATHS__ || {}).images || {};
       problems.push('映射 ' + Object.keys(resourceMap()).length
         + ' 项 / 内联 ' + Object.keys(inlineMap).length
         + ' 项 / 通道 ' + (RES_BASE ? 'ok' : '缺失'));
+      if (brokenRemote > 0) {
+        problems.push('外链图片 ' + brokenRemote + ' 张无法访问（网络原因）');
+      }
     }
 
     var existing = document.querySelector('.tk-diag');

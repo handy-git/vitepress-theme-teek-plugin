@@ -37,7 +37,7 @@ https://player.bilibili.com/player.html?bvid=BV1oLnt6tEDH&autoplay=0
 ```yaml
 - name: George Chan
   desc: 让我给你讲讲他的传奇故事吧
-  avatar: https://z3.ax1x.com/2021/09/30/4oKMVI.jpg
+  avatar: /blog/bg1.png
   link: https://cyc0819.top/
   bgColor: "#FFB6C1"
   textColor: "#621529"
