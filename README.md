@@ -2,11 +2,21 @@
 
 Renders [VitePress Theme Teek](https://github.com/Kele-Bingtang/vitepress-theme-teek) custom markdown containers in the Markdown preview.
 
+[![JetBrains Marketplace](https://img.shields.io/jetbrains/plugin/v/35492.svg?label=Marketplace)](https://plugins.jetbrains.com/plugin/35492-teek-markdown-preview)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/35492.svg)](https://plugins.jetbrains.com/plugin/35492-teek-markdown-preview)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
 ---
 
 # Teek Markdown Preview
 
 在 Markdown 预览中渲染 [VitePress Theme Teek](https://github.com/Kele-Bingtang/vitepress-theme-teek) 的自定义容器语法。
+
+[![JetBrains Marketplace](https://img.shields.io/jetbrains/plugin/v/35492.svg?label=Marketplace)](https://plugins.jetbrains.com/plugin/35492-teek-markdown-preview)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/35492.svg)](https://plugins.jetbrains.com/plugin/35492-teek-markdown-preview)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+
+插件主页：<https://plugins.jetbrains.com/plugin/35492-teek-markdown-preview>
 
 ## 支持的语法
 
@@ -31,6 +41,22 @@ Renders [VitePress Theme Teek](https://github.com/Kele-Bingtang/vitepress-theme-
 > 若不切换，Teek 容器会原样输出。
 
 ## 安装
+
+**方式一：从 JetBrains Marketplace 安装（推荐）**
+
+打开 `Settings → Plugins → Marketplace`，搜索 `Teek Markdown Preview`，或直接访问
+<https://plugins.jetbrains.com/plugin/35492-teek-markdown-preview> 点击 `Install`，重启 IDE。
+
+<div id="teek-marketplace"></div>
+
+<script src="https://plugins.jetbrains.com/assets/scripts/mp-widget.js"></script>
+<script>
+// 该 widget 需要页面执行 JavaScript（如官网 / 自建页面）。
+// GitHub README 不执行脚本，所以 GitHub 上展示的是上方 badge 与链接。
+MarketplaceWidget.setupMarketplaceWidget('card', 35492, "#teek-marketplace");
+</script>
+
+**方式二：离线安装**
 
 从仓库的 Releases 页面下载最新的 `vitepress-theme-teek-plugin-<版本号>.zip`，
 在 IDE 中执行 `Settings → Plugins → 齿轮 → Install Plugin from Disk...`，重启 IDE。
