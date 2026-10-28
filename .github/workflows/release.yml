@@ -37,7 +37,19 @@ jobs:
           echo "IntelliJ plugin version: ${VERSION}"
 
       - name: Build plugin
-        run: ./gradlew buildPlugin
+        run: |
+          # IdeLayoutIndexService 存在偶发竞态（zipfs 被并发关闭），失败后重试
+          attempt=1
+          max=3
+          until ./gradlew buildPlugin; do
+            if [ "${attempt}" -ge "${max}" ]; then
+              echo "构建连续失败 ${max} 次"
+              exit 1
+            fi
+            attempt=$((attempt + 1))
+            echo "第 $((attempt - 1)) 次失败，开始重试 ${attempt}/${max}"
+            sleep 10
+          done
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
