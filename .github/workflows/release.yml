@@ -1,23 +1,20 @@
 name: Release
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "要发布的 tag，例如 v0.1.0"
-        required: true
-        type: string
 
 permissions:
   contents: write
 
 jobs:
-  build:
-    name: Build and publish
+  idea:
+    name: Build IntelliJ plugin
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
 
     steps:
       - name: Checkout
@@ -32,28 +29,108 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Resolve version
-        id: version
+      - name: Read version
+        id: meta
         run: |
-          TAG="${{ inputs.tag || github.ref_name }}"
-          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          VERSION=$(grep '^pluginVersion=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "IntelliJ plugin version: ${VERSION}"
 
       - name: Build plugin
-        run: ./gradlew buildPlugin -PpluginVersion=${{ steps.version.outputs.version }}
+        run: ./gradlew buildPlugin
 
-      - name: Collect artifacts
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: idea-plugin
+          path: build/distributions/*.zip
+          if-no-files-found: error
+
+  vscode:
+    name: Build VS Code extension
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: vscode
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Read version
+        id: meta
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "VS Code extension version: ${VERSION}"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Package extension
         run: |
           mkdir -p dist
-          cp build/distributions/*.zip dist/
+          npx @vscode/vsce package -o "dist/teek-markdown-preview-${{ steps.meta.outputs.version }}.vsix"
 
-      - name: Publish to GitHub Releases
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-extension
+          path: dist/*.vsix
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: [idea, vscode]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: releases
+          merge-multiple: true
+
+      - name: Resolve tag
+        id: meta
+        run: |
+          VERSION="${{ needs.idea.outputs.version }}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Write release notes
+        env:
+          REPO: ${{ github.repository }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          IDEA_VERSION: ${{ needs.idea.outputs.version }}
+          VSCODE_VERSION: ${{ needs.vscode.outputs.version }}
+        run: |
+          DOWNLOAD="https://github.com/${REPO}/releases/download/${TAG}/vitepress-theme-teek-plugin-${IDEA_VERSION}.zip"
+          {
+            echo "更新记录: [点击查看](https://github.com/${REPO}/blob/main/CHANGELOG.md)"
+            echo ""
+            echo "| 渠道 | 下载 | 链接 |"
+            echo "| --- | --- | --- |"
+            echo "| idea | [点击下载](${DOWNLOAD}) | https://plugins.jetbrains.com/plugin/35492-teek-markdown-preview |"
+            echo "| vscode | 暂无 |  |"
+            echo ""
+            echo "VS Code 扩展版本: ${VSCODE_VERSION}"
+          } > notes.md
+
+      - name: Publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ steps.version.outputs.tag }}
+          TAG: ${{ steps.meta.outputs.tag }}
         run: |
           if gh release view "${TAG}" >/dev/null 2>&1; then
-            gh release upload "${TAG}" dist/*.zip --clobber
+            gh release upload "${TAG}" releases/* --clobber
+            gh release edit "${TAG}" --notes-file notes.md
           else
-            gh release create "${TAG}" dist/*.zip --title "${TAG}" --generate-notes
+            gh release create "${TAG}" releases/* --title "${TAG}" --notes-file notes.md
           fi

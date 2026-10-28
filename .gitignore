@@ -8,5 +8,10 @@ out/
 # IntelliJ Platform Gradle Plugin 本地状态
 .intellijPlatform/
 
+# VS Code 扩展分支的本地产物（在 vscode 分支打开时产生）
+node_modules/
+dist/
+*.vsix
+
 # WorkBuddy 项目数据
 .workbuddy/
