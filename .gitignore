@@ -1,12 +1,13 @@
-.gradle/
-build/
+node_modules/
 out/
-.idea/
-*.iml
+dist/
+*.vsix
 .DS_Store
 
-# IntelliJ Platform Gradle Plugin 本地状态
-.intellijPlatform/
+# IDEA 插件版遗留的本地状态与构建产物
+.gradle/
+.idea/
+build/
 
 # WorkBuddy 项目数据
 .workbuddy/

@@ -1,0 +1,66 @@
+{
+  "name": "teek-markdown-preview",
+  "displayName": "Teek Markdown Preview",
+  "description": "Render VitePress Theme Teek custom containers in the Markdown preview",
+  "version": "0.0.1",
+  "publisher": "handy",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "vitepress",
+    "teek",
+    "preview",
+    "container"
+  ],
+  "main": "./out/extension.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/handy-git/vitepress-theme-teek-plugin"
+  },
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "contributes": {
+    "markdown.markdownItPlugins": true,
+    "markdown.previewStyles": [
+      "./media/teek.css"
+    ],
+    "configuration": {
+      "title": "Teek Markdown",
+      "properties": {
+        "teekMarkdown.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "启用 Teek 容器与 public 目录图片解析"
+        },
+        "teekMarkdown.publicDir": {
+          "type": "string",
+          "default": "",
+          "description": "public 目录（相对工作区根；留空时自动查找 public 与 docs/public）"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.11.30",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.5"
+  }
+}

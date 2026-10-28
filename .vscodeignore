@@ -1,0 +1,12 @@
+.vscode/**
+.github/**
+src/**
+samples/**
+.gradle/**
+.idea/**
+.workbuddy/**
+build/**
+dist/**
+**/*.map
+tsconfig.json
+.gitignore
