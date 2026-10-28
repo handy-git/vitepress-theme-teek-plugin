@@ -12,16 +12,16 @@ permissions:
 jobs:
   idea:
     name: Build IntelliJ plugin
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.meta.outputs.version }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "25"
@@ -40,7 +40,7 @@ jobs:
         run: ./gradlew buildPlugin
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: idea-plugin
           path: build/distributions/*.zip
@@ -48,18 +48,18 @@ jobs:
 
   vscode:
     name: Build VS Code extension
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.meta.outputs.version }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: vscode
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -79,7 +79,7 @@ jobs:
           npx @vscode/vsce package -o "dist/teek-markdown-preview-${{ steps.meta.outputs.version }}.vsix"
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vscode-extension
           path: dist/*.vsix
@@ -88,11 +88,11 @@ jobs:
   release:
     name: Publish release
     needs: [idea, vscode]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: releases
           merge-multiple: true
