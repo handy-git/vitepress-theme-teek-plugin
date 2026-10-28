@@ -111,16 +111,16 @@ jobs:
           IDEA_VERSION: ${{ needs.idea.outputs.version }}
           VSCODE_VERSION: ${{ needs.vscode.outputs.version }}
         run: |
-          DOWNLOAD="https://github.com/${REPO}/releases/download/${TAG}/vitepress-theme-teek-plugin-${IDEA_VERSION}.zip"
+          IDEA_ASSET="https://github.com/${REPO}/releases/download/${TAG}/vitepress-theme-teek-plugin-${IDEA_VERSION}.zip"
+          VSCODE_ASSET="https://github.com/${REPO}/releases/download/${TAG}/teek-markdown-preview-${VSCODE_VERSION}.vsix"
+          MARKETPLACE="https://plugins.jetbrains.com/plugin/35492-teek-markdown-preview"
           {
             echo "更新记录: [点击查看](https://github.com/${REPO}/blob/main/CHANGELOG.md)"
             echo ""
             echo "| 渠道 | 下载 | 链接 |"
             echo "| --- | --- | --- |"
-            echo "| idea | [点击下载](${DOWNLOAD}) | https://plugins.jetbrains.com/plugin/35492-teek-markdown-preview |"
-            echo "| vscode | 暂无 |  |"
-            echo ""
-            echo "VS Code 扩展版本: ${VSCODE_VERSION}"
+            echo "| idea | [点击下载](${IDEA_ASSET}) | [JetBrains 插件](${MARKETPLACE}) |"
+            echo "| vscode | [点击下载](${VSCODE_ASSET}) | 暂无 |"
           } > notes.md
 
       - name: Publish
