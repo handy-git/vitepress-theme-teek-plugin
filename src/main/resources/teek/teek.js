@@ -441,7 +441,11 @@
     if (/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(value)) {
       return value;
     }
-    return assetUrlOf(normalizeKey(value));
+    var key = normalizeKey(value);
+    if (!resourceMap()[key]) {
+      return '';
+    }
+    return assetUrlOf(key);
   }
 
   /**
@@ -508,11 +512,10 @@
   }
 
   /**
-   * markdown 原生图片：/ 开头的路径一律走资源通道。
-   * 不先查映射表，因为映射表只在面板创建时生成一次，文档里新增的图片查不到；
-   * 资源通道由 Java 侧实时解析文件，命中与否交给它判断。
+   * markdown 原生图片：只改写能在映射表里命中的，未命中保持 IDE 原样，绝不臆造路径。
    */
   function fixImages(root) {
+    var map = resourceMap();
     var paths = window.__TEEK_PATHS__ || {};
     var images = root.querySelectorAll('img');
     for (var i = 0; i < images.length; i++) {
@@ -522,15 +525,14 @@
       if (!name && /^file:/i.test(src)) {
         name = nameFromFileUrl(src, paths);
       }
-      if (!name) {
+      if (!name || !map[normalizeKey(name)]) {
         continue;
       }
-      var key = normalizeKey(name);
-      var url = assetUrlOf(key);
+      var url = assetUrlOf(normalizeKey(name));
       if (!url || img.getAttribute('data-teek-applied') === url) {
         continue;
       }
-      applyImage(img, url, key);
+      applyImage(img, url, normalizeKey(name));
     }
   }
 
